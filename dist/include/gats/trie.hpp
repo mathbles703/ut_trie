@@ -25,24 +25,11 @@ class trie_node {
 public:
 	bool is_leaf = false;
 	std::string val;
-	//trie_node* children[10];
-	vector<trie_node*> children;
 	trie_node *childArray[26];
 	int i = 0; //keeps count of children in current node
 
-
-	trie_node()
-	{
-		
-	}
-	//need to insert the pointer into the array
-	//start with size 1 and increase it by 1 when need to do insert
-	//Then you can use the pointers to dereferece the node
-	//check the value and then use a count var
-
 public:
-	size_t size() const { return children.size(); }
-	void setChild(trie_node* node) const { children.push_back(node); }
+	size_t size() const { return i; }
 };
 
 template <class T>
@@ -56,15 +43,7 @@ public:
 
 	pointer begPtr;
 	pointer endPtr;
-	vector<trie_node<string>*> children;	//NO STL containers. Make this an array
-											//malloc the memory size needed for node
-
 	trie_node<string> root;
-
-	//needs to hold a node
-	//call a add function []
-	//the pointer points to node
-	//add a new node and contents go into that node
 
 public:
 	//ctors
@@ -74,17 +53,12 @@ public:
 	//insert item in trie
 	void operator [](std::string value) { 
 		trie_node<string> node;
-		//trie_node* node = new trie_node();
 		node.val = value;
 		////begPtr = node*; 
 		//root->setChild(node&);
 		root.childArray[root.i] = &node;
-		
 		root.i++;
-		//begPtr = &node;		
-		//this can't be converted from trie_node<std::string>* to unsigned int *
-		//root->children.push_back(&node);
-		
+		//begPtr = &node;				
 	}
 
 	//iterators
@@ -95,8 +69,6 @@ public:
 	bool empty() const { return begPtr == endPtr; }
 	size_type size() const { return root.i; }
 	//size_type size() const { return root->size(); }
-
-
 };
 
 template<class T>
