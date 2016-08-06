@@ -51,7 +51,8 @@ public:
 
 	pointer begPtr;
 	pointer endPtr;
-	vector<trie_node<string>*> children;
+	vector<trie_node<string>*> children;	//NO STL containers. Make this an array
+											//malloc the memory size needed for node
 
 	trie_node<string>* root;
 
