@@ -23,17 +23,22 @@ using namespace std;
 template<class T>
 class trie_node {
 public:
-	bool is_leaf;
+	bool is_leaf = false;
 	std::string val;
 	//trie_node* children[10];
 	vector<trie_node*> children;
-	
-//public:
-//	trie_node()
-//	{
-//		children.reserve(1);
-//	}
+	trie_node *childArray[26];
+	int i = 0; //keeps count of children in current node
 
+
+	trie_node()
+	{
+		
+	}
+	//need to insert the pointer into the array
+	//start with size 1 and increase it by 1 when need to do insert
+	//Then you can use the pointers to dereferece the node
+	//check the value and then use a count var
 
 public:
 	size_t size() const { return children.size(); }
@@ -54,7 +59,7 @@ public:
 	vector<trie_node<string>*> children;	//NO STL containers. Make this an array
 											//malloc the memory size needed for node
 
-	trie_node<string>* root;
+	trie_node<string> root;
 
 	//needs to hold a node
 	//call a add function []
@@ -73,7 +78,9 @@ public:
 		node.val = value;
 		////begPtr = node*; 
 		//root->setChild(node&);
-		children.push_back(&node);
+		root.childArray[root.i] = &node;
+		
+		root.i++;
 		//begPtr = &node;		
 		//this can't be converted from trie_node<std::string>* to unsigned int *
 		//root->children.push_back(&node);
@@ -86,7 +93,7 @@ public:
 
 	//capacity
 	bool empty() const { return begPtr == endPtr; }
-	size_type size() const { return children.size(); }
+	size_type size() const { return root.i; }
 	//size_type size() const { return root->size(); }
 
 
@@ -97,6 +104,7 @@ trie<T>::trie()
 {
 	begPtr = nullptr;
 	endPtr = begPtr;
+
 }
 
 
