@@ -73,6 +73,8 @@ public:
 		////begPtr = node*; 
 		//root->setChild(node&);
 		children.push_back(&node);
+		//begPtr = &node;		
+		//this can't be converted from trie_node<std::string>* to unsigned int *
 		//root->children.push_back(&node);
 		
 	}
@@ -102,6 +104,9 @@ trie<T>::~trie() {
 	delete[] begPtr;
 }
 
+
+//The main tree should have a pointer to 1 root note
+//each root note has children, beg ptr to it's parent and end ptr to children?
 
 /*============================================================================
 
