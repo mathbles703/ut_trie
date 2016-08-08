@@ -23,26 +23,27 @@ using namespace std;
 class trie_node {
 public:
 	bool is_leaf;
-	//std::string val;
 	char val;
 	trie_node* childArray[26];
-	int i = 0; //keeps count of children in current node
+	int children = 0; //keeps count of children in current node
+	int leafs = 0; //keeps track of total leaf nodes (Word count)
 
 	//ctor/dtor
 	trie_node() :is_leaf(false), val(char(0)), childArray{ nullptr } {}
 	trie_node(char ch) : is_leaf(false), val(ch), childArray{ nullptr } {}
 	~trie_node() {
-		for (int i = 0; i < 26; i++)
+		for (int i = 0; i < children; i++)
 			delete childArray[i];
 	}
 
 public:
-	size_t size() const { return i; }
+	size_t size() const { return children; }
+
 	//return a pointer to a child node that contains the value
 	trie_node* subNode(char ch)
 	{
-		if (i > 0) {
-			for (int j = 0; j < i; j++) {
+		if (children > 0) {
+			for (int j = 0; j < children; j++) {
 				if (childArray[j]->val == ch)
 					return childArray[j];
 			}
@@ -69,7 +70,7 @@ public:
 	trie();
 	~trie();
 
-
+	//inserts a string into trie. Checks if string exists and if specific letters exists on node
 	void operator [](std::string value) {
 		if (search(value)) return;
 		trie_node* curr = root;
@@ -81,15 +82,17 @@ public:
 			}
 			else {
 				trie_node* newNode = new trie_node(*si);
-				curr->childArray[curr->i] = newNode;
-				curr->i++;
+				curr->childArray[curr->children] = newNode;
+				curr->children++;
 				curr = newNode;
 				//change pointer of curr to point to new node
 			}
 		}
 		curr->is_leaf = true;
+		root->leafs++;
 	}
 
+	//searches the trie to see if a string already exists
 	bool search(string value)
 	{
 		trie_node* curr = root;
@@ -102,20 +105,6 @@ public:
 		return curr->is_leaf == true;
 	}
 
-	//check if the specificed node has the specificed letter
-	bool checkNodeChildren(trie_node* node,char letter)
-	{
-		for (int i = 0; i < 26; i++)
-		{
-			//string s = "";
-			//s.push_back(letter);
-			if (node->childArray[i] != NULL)
-				if(node->childArray[i]->val == letter)
-					return true;
-		}
-		return false;
-	}
-
 	//iterators
 	iterator begin() { return iterator(begPtr); }
 	iterator end() { return iterator(endPtr); }
@@ -123,23 +112,10 @@ public:
 	//capacity
 	bool empty() const { return begPtr == endPtr; }
 
-	//THIS NEEDS TO GO THROUGH EVERY SINGLE BRANCH, not just root children
-	size_type size() const {
-		size_type count = 0;
-		for (int j = 0; j < root->i; j++)
-		{
-			//Check if node has children
-			count += root->childArray[j]->i;
-		}
-
-		return count;
+	size_type size() {
+		return root->leafs;
 	}
 
-	unsigned count(string value)
-	{
-
-		return 1;
-	}
 };
 
 template<class T>
@@ -155,10 +131,6 @@ template<class T>
 trie<T>::~trie() {
 	delete root;
 }
-
-
-//The main tree should have a pointer to 1 root note
-//each root note has children, beg ptr to it's parent and end ptr to children?
 
 /*============================================================================
 
