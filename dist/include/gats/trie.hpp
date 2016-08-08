@@ -92,6 +92,41 @@ public:
 		root->leafs++;
 	}
 
+	//counts how many times a word is found in trie
+	size_type count(string value)
+	{
+		size_type count = 0;
+		trie_node* curr = root;
+		trie_node* temp;
+		if (root->children != 0)
+		{
+			for (int i = 0; i < root->children; i++)
+			{
+				for (string::iterator si = value.begin(); si != value.end(); si++)
+				{
+					temp = curr->subNode(*si);
+					if (temp != nullptr)
+					{
+						curr = temp;
+					}
+					else
+					{
+						return 0;
+					}
+				}
+				if (curr->is_leaf == true)
+					return 1;
+				else {
+					return curr->children;
+				}
+			}
+		}
+		else {
+			return 0;
+		}
+	}
+
+
 	//searches the trie to see if a string already exists
 	bool search(string value)
 	{
