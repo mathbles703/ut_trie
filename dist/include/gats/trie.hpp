@@ -20,8 +20,11 @@
 #include <initializer_list>
 using namespace std;
 
+template<class T>
 class trie_node {
 public:
+	using value_type = T;
+
 	bool is_leaf;
 	char val;
 	trie_node* childArray[26];
@@ -40,7 +43,7 @@ public:
 	size_t size() const { return children; }
 
 	//return a pointer to a child node that contains the value
-	trie_node* subNode(char ch)
+	trie_node<value_type>* subNode(char ch)
 	{
 		if (children > 0) {
 			for (int j = 0; j < children; j++) {
@@ -63,7 +66,7 @@ public:
 
 	pointer begPtr;
 	pointer endPtr;
-	trie_node* root;
+	trie_node<value_type>* root;
 
 public:
 	//ctors
@@ -73,15 +76,16 @@ public:
 	//inserts a string into trie. Checks if string exists and if specific letters exists on node
 	void operator [](std::string value) {
 		if (search(value)) return;
-		trie_node* curr = root;
+		trie_node<value_type>* curr = root;
 		for (string::iterator si = value.begin(); si != value.end(); si++)
 		{
-			trie_node* child = curr->subNode(*si);
+			trie_node<value_type>* child = curr->subNode(*si);
 			if (child != nullptr) {
+				//set child begPtr to &curr
 				curr = child;
 			}
 			else {
-				trie_node* newNode = new trie_node(*si);
+				trie_node<value_type>* newNode = new trie_node<value_type>(*si);
 				curr->childArray[curr->children] = newNode;
 				curr->children++;
 				curr = newNode;
@@ -89,6 +93,7 @@ public:
 			}
 		}
 		curr->is_leaf = true;
+		//get reference to parent of curr and increase its leaf count too
 		root->leafs++;
 	}
 
@@ -96,8 +101,8 @@ public:
 	size_type count(string value)
 	{
 		size_type count = 0;
-		trie_node* curr = root;
-		trie_node* temp;
+		trie_node<value_type>* curr = root;
+		trie_node<value_type>* temp;
 		if (root->children != 0)
 		{
 			for (int i = 0; i < root->children; i++)
@@ -130,7 +135,7 @@ public:
 	//searches the trie to see if a string already exists
 	bool search(string value)
 	{
-		trie_node* curr = root;
+		trie_node<value_type>* curr = root;
 		for (string::iterator si = value.begin(); si != value.end(); si++)
 		{
 			curr = curr->subNode(*si);
@@ -158,7 +163,7 @@ trie<T>::trie()
 {
 	begPtr = nullptr;
 	endPtr = begPtr;
-	root = new trie_node();
+	root = new trie_node<T>();
 }
 
 
