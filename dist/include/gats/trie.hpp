@@ -31,6 +31,7 @@ public:
 	int children = 0; //keeps count of children in current node
 	int leafs = 0; //keeps track of total leaf nodes (Word count)
 	value_type v_type;
+	string key;
 
 	//ctor/dtor
 	trie_node() :is_leaf(false), val(char(0)), childArray{ nullptr } {}
@@ -84,7 +85,10 @@ public:
 	~trie();
 
 	//inserts a string into trie. Checks if string exists and if specific letters exists on node
+
+	//leaf holds a key that represents the entire word
 	value_type& operator [](std::string value) {
+		string temp = "";
 		if (search(value)) 
 			return returnSearchNode(value)->v_type;
 		trie_node<value_type>* curr = root;
@@ -94,16 +98,19 @@ public:
 			if (child != nullptr) {
 				//set child begPtr to &curr
 				curr = child;
+				temp += (*si);
 			}
 			else {
 				trie_node<value_type>* newNode = new trie_node<value_type>(*si);
 				curr->childArray[curr->children] = newNode;
 				curr->children++;
 				curr = newNode;
+				temp += (*si);
 				//change pointer of curr to point to new node
 			}
 		}
 		curr->is_leaf = true;
+		curr->key = temp;
 		//get reference to parent of curr and increase its leaf count too
 		root->leafs++;
 		endPtr = curr;
