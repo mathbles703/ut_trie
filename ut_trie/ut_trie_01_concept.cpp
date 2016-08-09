@@ -132,7 +132,7 @@ BEGIN_PHASE(5, concept_iterator_begin_end) {
 	BOOST_CHECK(t.begin()->second == 12);
 
 	t[""] = 6;
-	BOOST_CHECK(t.begin() != t.end());
+	BOOST_CHECK(t.begin() != t.end());	//this is on root?
 	BOOST_CHECK(t.begin()->first == trie<int>::key_type(""));
 	BOOST_CHECK(t.begin()->second == 6);
 } END_PHASE()

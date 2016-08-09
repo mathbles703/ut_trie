@@ -23,14 +23,14 @@ using namespace std;
 template<class T>
 class trie_node {
 public:
-	using value_type = unsigned;
+	using value_type = T;
 
 	bool is_leaf;
 	char val;
 	trie_node* childArray[26];
 	int children = 0; //keeps count of children in current node
 	int leafs = 0; //keeps track of total leaf nodes (Word count)
-	value_type v_type = 0;
+	value_type v_type;
 
 	//ctor/dtor
 	trie_node() :is_leaf(false), val(char(0)), childArray{ nullptr } {}
