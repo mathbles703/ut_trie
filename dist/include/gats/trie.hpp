@@ -74,8 +74,8 @@ public:
 	using iterator = pointer;
 	using key_type = std::string;
 
-	pointer begPtr;
-	pointer endPtr;
+	trie_node<T>* begPtr;
+	trie_node<T>* endPtr;
 	trie_node<value_type>* root;
 
 public:
@@ -106,6 +106,7 @@ public:
 		curr->is_leaf = true;
 		//get reference to parent of curr and increase its leaf count too
 		root->leafs++;
+		endPtr = curr;
 		return curr->v_type;
 	}
 
@@ -186,9 +187,9 @@ public:
 template<class T>
 trie<T>::trie()
 {
-	begPtr = nullptr;
-	endPtr = begPtr;
 	root = new trie_node<T>();
+	begPtr = root;
+	endPtr = begPtr;
 }
 
 
