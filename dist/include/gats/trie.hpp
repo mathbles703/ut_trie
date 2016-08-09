@@ -16,7 +16,8 @@
 #include <string>
 #include <sstream>
 #include <iostream>
-#include <vector>
+#include <cassert>
+#include <algorithm>
 #include <initializer_list>
 using namespace std;
 
@@ -75,9 +76,18 @@ public:
 	using iterator = pointer;
 	using key_type = std::string;
 
-	trie_node<T>* begPtr;
-	trie_node<T>* endPtr;
+	//trie_node<T>* begPtr;
+	//trie_node<T>* endPtr;
+	pointer begPtr;
+	pointer endPtr;
+
 	trie_node<value_type>* root;
+
+	//class counting_iterator : public iterator<std::random_access_iterator_tag, int> {
+
+	//	
+
+	//};
 
 public:
 	//ctors
@@ -104,7 +114,14 @@ public:
 				trie_node<value_type>* newNode = new trie_node<value_type>(*si);
 				curr->childArray[curr->children] = newNode;
 				curr->children++;
+				//sort the parent child array
+				std::sort(curr->childArray, curr->childArray + curr->children,
+					[](trie_node<value_type>* a, trie_node<value_type>* b) -> bool
+				{ return a->val < b->val; });
+
 				curr = newNode;
+				//sort the new node child
+
 				temp += (*si);
 				//change pointer of curr to point to new node
 			}
@@ -113,9 +130,15 @@ public:
 		curr->key = temp;
 		//get reference to parent of curr and increase its leaf count too
 		root->leafs++;
-		endPtr = curr;
+		
+		//endPtr = curr;
+		//need to adjust begPtr and point end to nullptr
+
+		//adjusting begPtr here, not Root, but search within for first real (first?)
 		return curr->v_type;
 	}
+
+
 
 	//counts how many times a word is found in trie
 	size_type count(string value)
@@ -140,6 +163,7 @@ public:
 					}
 				}
 				if (curr->is_leaf == true)
+					//have a method that takes a node and returns # of leafs inside
 					return 1;
 				else {
 					return curr->children;
@@ -195,7 +219,7 @@ template<class T>
 trie<T>::trie()
 {
 	root = new trie_node<T>();
-	begPtr = root;
+	begPtr = nullptr;
 	endPtr = begPtr;
 }
 
