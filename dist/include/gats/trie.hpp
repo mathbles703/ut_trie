@@ -23,13 +23,14 @@ using namespace std;
 template<class T>
 class trie_node {
 public:
-	using value_type = T;
+	using value_type = unsigned;
 
 	bool is_leaf;
 	char val;
 	trie_node* childArray[26];
 	int children = 0; //keeps count of children in current node
 	int leafs = 0; //keeps track of total leaf nodes (Word count)
+	value_type v_type = 0;
 
 	//ctor/dtor
 	trie_node() :is_leaf(false), val(char(0)), childArray{ nullptr } {}
@@ -53,6 +54,14 @@ public:
 		}
 		return nullptr;
 	}
+
+	/*value_type operation= (value_type rhs)
+	{
+		v_type = rhs;
+		return *this;
+	}*/
+
+
 };
 
 template <class T>
@@ -63,6 +72,7 @@ public:
 	using reference = value_type&;
 	using pointer = value_type*;
 	using iterator = pointer;
+	using key_type = std::string;
 
 	pointer begPtr;
 	pointer endPtr;
@@ -74,8 +84,9 @@ public:
 	~trie();
 
 	//inserts a string into trie. Checks if string exists and if specific letters exists on node
-	void operator [](std::string value) {
-		if (search(value)) return;
+	value_type& operator [](std::string value) {
+		if (search(value)) 
+			return returnSearchNode(value)->v_type;
 		trie_node<value_type>* curr = root;
 		for (string::iterator si = value.begin(); si != value.end(); si++)
 		{
@@ -95,6 +106,7 @@ public:
 		curr->is_leaf = true;
 		//get reference to parent of curr and increase its leaf count too
 		root->leafs++;
+		return curr->v_type;
 	}
 
 	//counts how many times a word is found in trie
@@ -130,6 +142,18 @@ public:
 		else {
 			return 0;
 		}
+	}
+
+	trie_node<T>* returnSearchNode(string value)
+	{
+		trie_node<value_type>* curr = root;
+		for (string::iterator si = value.begin(); si != value.end(); si++)
+		{
+			curr = curr->subNode(*si);
+			if (curr == nullptr)
+				return false;
+		}
+		return curr;
 	}
 
 
