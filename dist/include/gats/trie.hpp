@@ -148,7 +148,8 @@ public:
 				//change pointer of curr to point to new node
 				curr = newNode;
 				temp += (*si);
-
+				//set the begPtr based on all nodes, takes into account latest additions
+				begPtr = setBegPtr(root);
 			}
 		}
 		curr->is_leaf = true;
@@ -163,7 +164,13 @@ public:
 		return curr->v_type;
 	}
 
-
+	trie_node<T>* setBegPtr(trie_node<T>* node)
+	{
+		if (node->children == 0)
+			return node;
+		else
+			return setBegPtr(node->childArray[0]);
+	}
 
 	//counts how many times a word is found in trie
 	size_type count(string value)
