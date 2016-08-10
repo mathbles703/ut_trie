@@ -72,9 +72,11 @@ public:
 	using value_type = T;
 	using size_type = std::size_t;
 	using reference = value_type&;
-	using pointer = value_type*;
-	using iterator = pointer;
+	using trieNode = trie_node<T>*;
+	using pointer = trieNode;
+
 	using key_type = std::string;
+	using triePair = std::pair<key_type, T>;
 
 	//trie_node<T>* begPtr;
 	//trie_node<T>* endPtr;
@@ -83,16 +85,41 @@ public:
 
 	trie_node<value_type>* root;
 
-	//class counting_iterator : public iterator<std::random_access_iterator_tag, int> {
+	template<typename T>
+	class node_iterator : public std::iterator<std::bidirectional_iterator_tag, pair<key_type,T>> {
+	private:
+		triePair p;
+		key_type first;
+		T second;
+		//operator->
+	public:
+		node_iterator(trieNode n): first(n->key), second(n->v_type), p(triePair(n->key, n->v_type)) {}
+		bool operator == (node_iterator const & rhs) const { return first == rhs.first; }
+		bool operator != (node_iterator const & rhs) const { return first != rhs.first; }
 
-	//	
+//		dereference to get pair
+		triePair* operator->()
+		{
+			//p = triePair(std::make_pair(first, second));
+			//return &std::make_pair(first, second);
+			return &p;
+		}
+	};
 
-	//};
+public:
+	using iterator = node_iterator<T>;
+
+	//compare iterator
+	//bool operator==(iterator const & a, iterator const & b)
+	//{
+
+	//}
 
 public:
 	//ctors
 	trie();
 	~trie();
+
 
 	//inserts a string into trie. Checks if string exists and if specific letters exists on node
 
@@ -116,14 +143,12 @@ public:
 				curr->children++;
 				//sort the parent child array
 				std::sort(curr->childArray, curr->childArray + curr->children,
-					[](trie_node<value_type>* a, trie_node<value_type>* b) -> bool
+					[](trieNode a, trieNode b) -> bool
 				{ return a->val < b->val; });
-
-				curr = newNode;
-				//sort the new node child
-
-				temp += (*si);
 				//change pointer of curr to point to new node
+				curr = newNode;
+				temp += (*si);
+
 			}
 		}
 		curr->is_leaf = true;
@@ -219,8 +244,8 @@ template<class T>
 trie<T>::trie()
 {
 	root = new trie_node<T>();
-	begPtr = nullptr;
-	endPtr = begPtr;
+	endPtr = root;
+	begPtr = endPtr;
 }
 
 
