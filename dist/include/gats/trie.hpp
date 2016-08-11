@@ -28,6 +28,7 @@ public:
 
 	bool is_leaf;
 	char val;
+	trie_node* parent;
 	trie_node* childArray[26];
 	int children = 0; //keeps count of children in current node
 	int leafs = 0; //keeps track of total leaf nodes (Word count)
@@ -146,6 +147,7 @@ public:
 					[](trieNode a, trieNode b) -> bool
 				{ return a->val < b->val; });
 				//change pointer of curr to point to new node
+				newNode->parent = curr;
 				curr = newNode;
 				temp += (*si);
 				//set the begPtr based on all nodes, takes into account latest additions
