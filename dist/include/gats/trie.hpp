@@ -36,8 +36,8 @@ public:
 	string key;
 
 	//ctor/dtor
-	trie_node() :is_leaf(false), val(char(0)), childArray{ nullptr } {}
-	trie_node(char ch) : is_leaf(false), val(ch), childArray{ nullptr } {}
+	trie_node() :is_leaf(false), val(char(0)), childArray{ nullptr }, parent(nullptr) {}
+	trie_node(char ch) : is_leaf(false), val(ch), childArray{ nullptr }, parent(nullptr) {}
 	~trie_node() {
 		for (int i = 0; i < children; i++)
 			delete childArray[i];
@@ -106,6 +106,12 @@ public:
 			//return &std::make_pair(first, second);
 			return &p;
 		}
+
+		//node_iterator& operator++() {
+		//	next();
+		//	return *this;
+		//}
+
 	};
 
 public:
@@ -123,8 +129,19 @@ public:
 	~trie();
 
 
-	//inserts a string into trie. Checks if string exists and if specific letters exists on node
+	void increaseLeafCount(trieNode node)
+	{
+		trieNode parent = node->parent;
+		if (parent == nullptr)
+			return;
+		else
+		{
+			parent->leafs++;
+			increaseLeafCount(parent);
+		}
+	}
 
+	//inserts a string into trie. Checks if string exists and if specific letters exists on node
 	//leaf holds a key that represents the entire word
 	value_type& operator [](std::string value) {
 		string temp = "";
@@ -158,11 +175,16 @@ public:
 		curr->is_leaf = true;
 		curr->key = temp;
 		//get reference to parent of curr and increase its leaf count too
-		root->leafs++;
+
+		//COMMENT THIS OUT
+		//root->leafs++; 
 		
 		//endPtr = curr;
 		//need to adjust begPtr and point end to nullptr
 
+		//adjust leaf node count
+		//crawler method will go from leaf to root and increase leaf by ++
+		increaseLeafCount(curr);
 		//adjusting begPtr here, not Root, but search within for first real (first?)
 		return curr->v_type;
 	}
