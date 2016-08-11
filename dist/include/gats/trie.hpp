@@ -32,7 +32,7 @@ public:
 	trie_node* childArray[26];
 	int children = 0; //keeps count of children in current node
 	int leafs = 0; //keeps track of total leaf nodes (Word count)
-	value_type v_type;
+	value_type v_type{};
 	string key;
 
 	//ctor/dtor
@@ -83,6 +83,7 @@ public:
 	//trie_node<T>* endPtr;
 	pointer begPtr;
 	pointer endPtr;
+	pointer absEnd;
 
 	trie_node<value_type>* root;
 
@@ -95,8 +96,8 @@ public:
 		//operator->
 	public:
 		node_iterator(trieNode n): first(n->key), second(n->v_type), p(triePair(n->key, n->v_type)) {}
-		bool operator == (node_iterator const & rhs) const { return first == rhs.first; }
-		bool operator != (node_iterator const & rhs) const { return first != rhs.first; }
+		bool operator == (node_iterator const & rhs) const { return second == rhs.second; }
+		bool operator != (node_iterator const & rhs) const { return second != rhs.second; }
 
 //		dereference to get pair
 		triePair* operator->()
@@ -151,7 +152,7 @@ public:
 				curr = newNode;
 				temp += (*si);
 				//set the begPtr based on all nodes, takes into account latest additions
-				begPtr = setBegPtr(root);
+				//begPtr = setBegPtr(root);
 			}
 		}
 		curr->is_leaf = true;
@@ -168,10 +169,14 @@ public:
 
 	trie_node<T>* setBegPtr(trie_node<T>* node)
 	{
-		if (node->children == 0)
+		if (node->v_type != T{})
+			return node;
+		else if (node->children > 0)
+			return setBegPtr(node->childArray[0]);
+		else if (node->val != char(0))
 			return node;
 		else
-			return setBegPtr(node->childArray[0]);
+			return root;
 	}
 
 	//counts how many times a word is found in trie
@@ -237,7 +242,7 @@ public:
 	}
 
 	//iterators
-	iterator begin() { return iterator(begPtr); }
+	iterator begin() { return iterator(setBegPtr(root)); }
 	iterator end() { return iterator(endPtr); }
 
 	//capacity
@@ -253,7 +258,8 @@ template<class T>
 trie<T>::trie()
 {
 	root = new trie_node<T>();
-	endPtr = root;
+	absEnd = new trie_node<T>();
+	endPtr = absEnd;
 	begPtr = endPtr;
 }
 
@@ -261,6 +267,7 @@ trie<T>::trie()
 template<class T>
 trie<T>::~trie() {
 	delete root;
+	delete absEnd;
 }
 
 /*============================================================================
