@@ -195,8 +195,6 @@ public:
 			return node;
 		else if (node->children > 0)
 			return setBegPtr(node->childArray[0]);
-		else if (node->val != char(0))
-			return node;
 		else
 			return root;
 	}
