@@ -12,7 +12,7 @@
 
 #define UT_VERSION "1.0.0"
 
-#define TEST_PHASE 5
+#define TEST_PHASE 6
 
 
 #include <gats/trie.hpp>
