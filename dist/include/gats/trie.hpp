@@ -19,6 +19,7 @@
 #include <cassert>
 #include <algorithm>
 #include <initializer_list>
+#include <cassert>
 using namespace std;
 
 /*Trie Node Class
@@ -197,6 +198,7 @@ public:
 				}
 				//the next valid leaf node
 				returnNode = getLeafNode(parentNode->childArray[nextNodeIndex]);
+				assert(returnNode->children == 0);	//ensure it is a real leaf node
 			}
 			return returnNode;
 		}
@@ -215,7 +217,9 @@ public:
 		if (parent == nullptr)
 			return;
 		else {
+			int parentLeafPreIncrement = parent->leafs;
 			parent->leafs++;
+			assert(parent->leafs == parentLeafPreIncrement + 1);	//ensure the leafs were incremented
 			increaseLeafCount(parent);
 		}
 	}
@@ -237,8 +241,10 @@ public:
 			}
 			else {
 				trie_node<value_type>* newNode = new trie_node<value_type>(*si);
+				int childrenPreInsert = curr->children;	//used for assert test
 				curr->childArray[curr->children] = newNode;
 				curr->children++;
+				assert(curr->children == childrenPreInsert + 1);
 				//sort the parent child array by the char value
 				std::sort(curr->childArray, curr->childArray + curr->children,
 					[](trieNode a, trieNode b) -> bool
@@ -258,7 +264,11 @@ public:
 	//returns first found node that has a nodeTypeValue. 
 	trie_node<T>* getNodeWithValue(trie_node<T>* node) {
 		if (node->nodeTypeValue != T{})
+		{
+			if(node->parent != nullptr)
+				assert(node->val != char(0));	//ensure node has a value
 			return node;
+		}
 		else if (node->children > 0)
 			return getNodeWithValue(node->childArray[0]);
 		else
@@ -304,7 +314,6 @@ public:
 
 	//searches the trie to see if a string already exists
 	//if entire word is found, we check if the last node is a leaf
-	//if it's not a leaf, the bool value is switched in another method
 	bool search(string value) {
 		trie_node<value_type>* curr = root;
 		for (string::iterator si = value.begin(); si != value.end(); si++) {
