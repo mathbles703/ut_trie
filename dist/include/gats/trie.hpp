@@ -60,12 +60,14 @@ public:
 
 	/*value_type operation= (value_type rhs)
 	{
-		v_type = rhs;
-		return *this;
+	v_type = rhs;
+	return *this;
 	}*/
 
 
 };
+
+
 
 template <class T>
 class trie {
@@ -83,23 +85,31 @@ public:
 	//trie_node<T>* endPtr;
 	pointer begPtr;
 	pointer endPtr;
-	pointer absEnd;
+	pointer trie::absEnd;
 
 	trie_node<value_type>* root;
 
 	template<typename T>
-	class node_iterator : public std::iterator<std::bidirectional_iterator_tag, pair<key_type,T>> {
+	class node_iterator : public std::iterator<std::bidirectional_iterator_tag, pair<key_type, T>> {
 	private:
 		triePair p;
+		trieNode currentNode;
 		key_type first;
 		T second;
+		trieNode absEndPtr;
 		//operator->
 	public:
-		node_iterator(trieNode n): first(n->key), second(n->v_type), p(triePair(n->key, n->v_type)) {}
-		bool operator == (node_iterator const & rhs) const { return second == rhs.second; }
+		node_iterator(trieNode n, trieNode e) : first(n->key), second(n->v_type), p(triePair(n->key, n->v_type)), currentNode(n), absEndPtr(e) {}
+		node_iterator(trieNode e) : absEndPtr(e) {}
+		bool operator == (node_iterator const & rhs) const { 
+			if (currentNode == absEndPtr) 
+				return true;
+			else
+				return second == rhs.second; 
+		}
 		bool operator != (node_iterator const & rhs) const { return second != rhs.second; }
 
-//		dereference to get pair
+		//		dereference to get pair
 		triePair* operator->()
 		{
 			//p = triePair(std::make_pair(first, second));
@@ -107,10 +117,62 @@ public:
 			return &p;
 		}
 
-		//node_iterator& operator++() {
-		//	next();
-		//	return *this;
-		//}
+		void setIteratorPair()
+		{
+			p = triePair(std::make_pair(currentNode->key, currentNode->v_type));
+		}
+
+		trieNode getLeafNode(trieNode node)
+		{
+			if (node->v_type != T{})
+				return node;
+			else if (node->children > 0)
+				return getLeafNode(node->childArray[0]);
+			else
+				return node->parent;
+		}
+
+		trieNode next(trieNode parentNode, char value)
+		{
+			int nextNodeIndex = 0;
+			trieNode returnNode;
+			//to deal with returning back to root node
+			bool breakFunction = false;
+
+			if (parentNode->leafs == 1)
+				return next(parentNode->parent, parentNode->val);
+			else
+			{
+
+				for (int i = 0; i < parentNode->children; i++)
+				{
+					trieNode tempNode = parentNode->childArray[i];
+					if (tempNode->val == value)
+					{
+						nextNodeIndex = i + 1;
+						breakFunction = true;
+					}
+					if ((nextNodeIndex >= parentNode->children) && (parentNode->val == char(0)))
+						return absEndPtr;
+
+					if (nextNodeIndex >= parentNode->children)
+						return next(parentNode->parent, parentNode->val);
+					
+					if (breakFunction == true) break;
+				}
+				returnNode = getLeafNode(parentNode->childArray[nextNodeIndex]);
+			}
+			return returnNode;
+		}
+
+		node_iterator& operator++() {
+			currentNode = next(currentNode->parent, currentNode->val);
+			if (currentNode == absEndPtr)
+			{}
+			else
+				setIteratorPair();
+			return *this;
+		}
 
 	};
 
@@ -145,7 +207,7 @@ public:
 	//leaf holds a key that represents the entire word
 	value_type& operator [](std::string value) {
 		string temp = "";
-		if (search(value)) 
+		if (search(value))
 			return returnSearchNode(value)->v_type;
 		trie_node<value_type>* curr = root;
 		for (string::iterator si = value.begin(); si != value.end(); si++)
@@ -169,7 +231,7 @@ public:
 				curr = newNode;
 				temp += (*si);
 				//set the begPtr based on all nodes, takes into account latest additions
-				//begPtr = setBegPtr(root);
+				//begPtr = getNodeWithValue(root);
 			}
 		}
 		curr->is_leaf = true;
@@ -178,7 +240,7 @@ public:
 
 		//COMMENT THIS OUT
 		//root->leafs++; 
-		
+
 		//endPtr = curr;
 		//need to adjust begPtr and point end to nullptr
 
@@ -189,12 +251,12 @@ public:
 		return curr->v_type;
 	}
 
-	trie_node<T>* setBegPtr(trie_node<T>* node)
+	trie_node<T>* getNodeWithValue(trie_node<T>* node)
 	{
 		if (node->v_type != T{})
 			return node;
 		else if (node->children > 0)
-			return setBegPtr(node->childArray[0]);
+			return getNodeWithValue(node->childArray[0]);
 		else
 			return root;
 	}
@@ -262,8 +324,8 @@ public:
 	}
 
 	//iterators
-	iterator begin() { return iterator(setBegPtr(root)); }
-	iterator end() { return iterator(endPtr); }
+	iterator begin() { return iterator(getNodeWithValue(root), endPtr); }
+	iterator end() { return iterator(endPtr, endPtr); }
 
 	//capacity
 	bool empty() const { return begPtr == endPtr; }
@@ -274,12 +336,16 @@ public:
 
 };
 
+
+
+
+
 template<class T>
 trie<T>::trie()
 {
 	root = new trie_node<T>();
-	absEnd = new trie_node<T>();
-	endPtr = absEnd;
+	trie::absEnd = new trie_node<T>();
+	endPtr = trie::absEnd;
 	begPtr = endPtr;
 }
 
@@ -287,7 +353,7 @@ trie<T>::trie()
 template<class T>
 trie<T>::~trie() {
 	delete root;
-	delete absEnd;
+	delete trie::absEnd;
 }
 
 /*============================================================================
