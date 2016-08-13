@@ -21,34 +21,42 @@
 #include <initializer_list>
 using namespace std;
 
+/*Trie Node Class
+
+  Represents a trie node inside a trie. Will hold at minimum a value representing the prefix, 
+  bool to indicate if it's a leaf node (end of word)
+  an array of trie_node pointers
+  and a parent (excluding the root node)*/
 template<class T>
 class trie_node {
 public:
 	using value_type = T;
 
-	bool is_leaf;
-	char val;
-	trie_node* parent;
-	trie_node* childArray[26];
-	int children = 0; //keeps count of children in current node
-	int leafs = 0; //keeps track of total leaf nodes (Word count)
-	value_type v_type{};
-	string key;
+	bool is_leaf;						//indicates node is end of a word
+	char val;							//the character prefix the node will hold
+	trie_node* parent;					//pointer to parent (root wont have one)
+	trie_node* childArray[26];			//array will hold all postfix nodes
+	int children = 0;					//keeps count of children in current node
+	int leafs = 0;						//keeps track of total leaf nodes (Word count)
+	value_type nodeTypeValue{};			//node can be given a value of type T based on trie<T>
+	string key;							//The key represents the whole word and is stored in leaf node
 
 	//ctor/dtor
 	trie_node() :is_leaf(false), val(char(0)), childArray{ nullptr }, parent(nullptr) {}
 	trie_node(char ch) : is_leaf(false), val(ch), childArray{ nullptr }, parent(nullptr) {}
+	//used to clean all children. Dtor will be called recursively
 	~trie_node() {
 		for (int i = 0; i < children; i++)
 			delete childArray[i];
 	}
 
 public:
+	//return the number of childen for that node
 	size_t size() const { return children; }
 
-	//return a pointer to a child node that contains the value
-	trie_node<value_type>* subNode(char ch)
-	{
+	//return a pointer to a child node that contains the char value
+	//returns nullptr if no match
+	trie_node<value_type>* subNode(char ch) {
 		if (children > 0) {
 			for (int j = 0; j < children; j++) {
 				if (childArray[j]->val == ch)
@@ -57,18 +65,13 @@ public:
 		}
 		return nullptr;
 	}
-
-	/*value_type operation= (value_type rhs)
-	{
-	v_type = rhs;
-	return *this;
-	}*/
-
-
 };
 
 
+/*Trie Class
 
+  Represents a trie class. It will have 1 root node 
+  and 2 pointers to a begPtr and endPtr*/
 template <class T>
 class trie {
 public:
@@ -77,18 +80,35 @@ public:
 	using reference = value_type&;
 	using trieNode = trie_node<T>*;
 	using pointer = trieNode;
-
 	using key_type = std::string;
 	using triePair = std::pair<key_type, T>;
 
-	//trie_node<T>* begPtr;
-	//trie_node<T>* endPtr;
 	pointer begPtr;
 	pointer endPtr;
 	pointer trie::absEnd;
-
 	trie_node<value_type>* root;
 
+public:
+	//ctor/dtors
+	trie()
+	{
+		root = new trie_node<T>();				//holds ALL node children
+		trie::absEnd = new trie_node<T>();		//indicates Absolute end of trie. Used in iteration
+		endPtr = trie::absEnd;
+		begPtr = endPtr;
+	}
+
+	~trie() {
+		delete root;
+		delete trie::absEnd;
+	}
+
+
+
+	/*Iterator Class
+	
+	  Used to iterate through a trie. Will hold a pointer to current Node,
+	  a pointer to the absolute end pointer*/
 	template<typename T>
 	class node_iterator : public std::iterator<std::bidirectional_iterator_tag, pair<key_type, T>> {
 	private:
@@ -97,34 +117,43 @@ public:
 		key_type first;
 		T second;
 		trieNode absEndPtr;
-		//operator->
+
 	public:
-		node_iterator(trieNode n, trieNode e) : first(n->key), second(n->v_type), p(triePair(n->key, n->v_type)), currentNode(n), absEndPtr(e) {}
-		node_iterator(trieNode e) : absEndPtr(e) {}
+		//iterator initializers
+		node_iterator(trieNode n, trieNode e) : first(n->key), second(n->nodeTypeValue), p(triePair(n->key, n->nodeTypeValue)), currentNode(n), absEndPtr(e) {}
+
+		//sets internal pair to reflect the currentNode
+		void setIteratorPair()
+		{
+			p = triePair(std::make_pair(currentNode->key, currentNode->nodeTypeValue));
+		}
+
+		//operators
 		bool operator == (node_iterator const & rhs) const { 
+			//this check is used to check if the iterator has reached the absolute end pointer
 			if (currentNode == absEndPtr) 
 				return true;
 			else
 				return second == rhs.second; 
 		}
+
 		bool operator != (node_iterator const & rhs) const { return second != rhs.second; }
 
-		//		dereference to get pair
-		triePair* operator->()
-		{
-			//p = triePair(std::make_pair(first, second));
-			//return &std::make_pair(first, second);
-			return &p;
+		//dereference to get pair
+		triePair* operator->() { return &p; }
+
+		//pre-increment operator
+		node_iterator& operator++() {
+			currentNode = next(currentNode->parent, currentNode->val);
+			if (currentNode == absEndPtr) {}
+			else
+				setIteratorPair();
+			return *this;
 		}
 
-		void setIteratorPair()
-		{
-			p = triePair(std::make_pair(currentNode->key, currentNode->v_type));
-		}
-
-		trieNode getLeafNode(trieNode node)
-		{
-			if (node->v_type != T{})
+		//Uses the passed in node and checks 
+		trieNode getLeafNode(trieNode node) {
+			if (node->nodeTypeValue != T{})
 				return node;
 			else if (node->children > 0)
 				return getLeafNode(node->childArray[0]);
@@ -132,86 +161,74 @@ public:
 				return node->parent;
 		}
 
+		//used to iterate to the next leaf node
+		//this method will take a lead node initially
+		//it will crawl back up the tree until it hits a node that splits (has another different child/path)
+		//the next child node is passed back to this method and it will crawl down that path
+		//a method called GetLeafNode is used recursively
+		//if it meets a leaf node, it will return a pointer to it
+		//otherwise it will return the parent of the last node passed to the method
 		trieNode next(trieNode parentNode, char value)
 		{
 			int nextNodeIndex = 0;
 			trieNode returnNode;
-			//to deal with returning back to root node
-			bool breakFunction = false;
+			bool breakFunction = false; //used to break out of loop when next valid path/node is found
 
 			if (parentNode->leafs == 1)
 				return next(parentNode->parent, parentNode->val);
-			else
-			{
+			else {
 
-				for (int i = 0; i < parentNode->children; i++)
-				{
+				for (int i = 0; i < parentNode->children; i++) {
 					trieNode tempNode = parentNode->childArray[i];
-					if (tempNode->val == value)
-					{
+					if (tempNode->val == value) {
 						nextNodeIndex = i + 1;
 						breakFunction = true;
 					}
+
+					//if we have exhausted all valid paths and we have reached the node, we return the absolute end pointer
 					if ((nextNodeIndex >= parentNode->children) && (parentNode->val == char(0)))
 						return absEndPtr;
 
+					//if we have exhausted all paths, we will go up 1 level
 					if (nextNodeIndex >= parentNode->children)
 						return next(parentNode->parent, parentNode->val);
 					
 					if (breakFunction == true) break;
 				}
+				//the next valid leaf node
 				returnNode = getLeafNode(parentNode->childArray[nextNodeIndex]);
 			}
 			return returnNode;
 		}
-
-		node_iterator& operator++() {
-			currentNode = next(currentNode->parent, currentNode->val);
-			if (currentNode == absEndPtr)
-			{}
-			else
-				setIteratorPair();
-			return *this;
-		}
-
 	};
 
+//late using initialized, needs to see node_iterator first
 public:
 	using iterator = node_iterator<T>;
 
-	//compare iterator
-	//bool operator==(iterator const & a, iterator const & b)
-	//{
 
-	//}
-
-public:
-	//ctors
-	trie();
-	~trie();
-
-
-	void increaseLeafCount(trieNode node)
-	{
+	//When a leaf node in inserted into trie
+	//this method will crawl up to the root node
+	//and increase the leaf count on every node it touches
+	void increaseLeafCount(trieNode node) {
 		trieNode parent = node->parent;
 		if (parent == nullptr)
 			return;
-		else
-		{
+		else {
 			parent->leafs++;
 			increaseLeafCount(parent);
 		}
 	}
 
-	//inserts a string into trie. Checks if string exists and if specific letters exists on node
+	//inserts a string into trie.
+	//Checks if string exists. If prefix exists, a pointer to the end of prefix is used for insert point for new node
 	//leaf holds a key that represents the entire word
 	value_type& operator [](std::string value) {
 		string temp = "";
 		if (search(value))
-			return returnSearchNode(value)->v_type;
+			return returnSearchNode(value)->nodeTypeValue;
 		trie_node<value_type>* curr = root;
-		for (string::iterator si = value.begin(); si != value.end(); si++)
-		{
+		for (string::iterator si = value.begin(); si != value.end(); si++) {
 			trie_node<value_type>* child = curr->subNode(*si);
 			if (child != nullptr) {
 				//set child begPtr to &curr
@@ -222,38 +239,25 @@ public:
 				trie_node<value_type>* newNode = new trie_node<value_type>(*si);
 				curr->childArray[curr->children] = newNode;
 				curr->children++;
-				//sort the parent child array
+				//sort the parent child array by the char value
 				std::sort(curr->childArray, curr->childArray + curr->children,
 					[](trieNode a, trieNode b) -> bool
 				{ return a->val < b->val; });
-				//change pointer of curr to point to new node
+				//set the parent of the new node, and then make it the current node
 				newNode->parent = curr;
 				curr = newNode;
-				temp += (*si);
-				//set the begPtr based on all nodes, takes into account latest additions
-				//begPtr = getNodeWithValue(root);
+				temp += (*si);	//increment the string to be added to leaf node as key
 			}
 		}
 		curr->is_leaf = true;
-		curr->key = temp;
-		//get reference to parent of curr and increase its leaf count too
-
-		//COMMENT THIS OUT
-		//root->leafs++; 
-
-		//endPtr = curr;
-		//need to adjust begPtr and point end to nullptr
-
-		//adjust leaf node count
-		//crawler method will go from leaf to root and increase leaf by ++
-		increaseLeafCount(curr);
-		//adjusting begPtr here, not Root, but search within for first real (first?)
-		return curr->v_type;
+		curr->key = temp;			//used to hold whole word in leaf node
+		increaseLeafCount(curr);	//crawler method will go from leaf to root and increase leaf by ++
+		return curr->nodeTypeValue;
 	}
 
-	trie_node<T>* getNodeWithValue(trie_node<T>* node)
-	{
-		if (node->v_type != T{})
+	//returns first found node that has a nodeTypeValue. 
+	trie_node<T>* getNodeWithValue(trie_node<T>* node) {
+		if (node->nodeTypeValue != T{})
 			return node;
 		else if (node->children > 0)
 			return getNodeWithValue(node->childArray[0]);
@@ -262,46 +266,34 @@ public:
 	}
 
 	//counts how many times a word is found in trie
-	size_type count(string value)
-	{
+	size_type count(string value) {
 		size_type count = 0;
 		trie_node<value_type>* curr = root;
 		trie_node<value_type>* temp;
-		if (root->children != 0)
-		{
-			for (int i = 0; i < root->children; i++)
-			{
-				for (string::iterator si = value.begin(); si != value.end(); si++)
-				{
-					temp = curr->subNode(*si);
-					if (temp != nullptr)
-					{
+		if (root->children != 0) {
+			for (int i = 0; i < root->children; i++) { //searches every child of root
+				for (string::iterator si = value.begin(); si != value.end(); si++) {
+					temp = curr->subNode(*si); //searches character by character for each letter. As soon as one letter is NOT found, 0 is added to count
+					if (temp != nullptr) {
 						curr = temp;
 					}
-					else
-					{
-						return 0;
-					}
+					else { return 0; }
 				}
 				if (curr->is_leaf == true)
-					//have a method that takes a node and returns # of leafs inside
 					return 1;
-				else {
-					return curr->children;
-				}
+				else { return curr->children; }
 			}
 			return 0;
 		}
-		else {
-			return 0;
-		}
+		else { return 0; } //if there are no children in root
 	}
 
-	trie_node<T>* returnSearchNode(string value)
-	{
+	//used to search for a whole word. Returns a pointer to the node at end of word
+	//used in case user trying to insert word that already exists
+	//used in element access/insert method
+	trie_node<T>* returnSearchNode(string value) {
 		trie_node<value_type>* curr = root;
-		for (string::iterator si = value.begin(); si != value.end(); si++)
-		{
+		for (string::iterator si = value.begin(); si != value.end(); si++) {
 			curr = curr->subNode(*si);
 			if (curr == nullptr)
 				return false;
@@ -311,11 +303,11 @@ public:
 
 
 	//searches the trie to see if a string already exists
-	bool search(string value)
-	{
+	//if entire word is found, we check if the last node is a leaf
+	//if it's not a leaf, the bool value is switched in another method
+	bool search(string value) {
 		trie_node<value_type>* curr = root;
-		for (string::iterator si = value.begin(); si != value.end(); si++)
-		{
+		for (string::iterator si = value.begin(); si != value.end(); si++) {
 			curr = curr->subNode(*si);
 			if (curr == nullptr)
 				return false;
@@ -330,31 +322,10 @@ public:
 	//capacity
 	bool empty() const { return begPtr == endPtr; }
 
-	size_type size() {
-		return root->leafs;
-	}
-
+	//returns the number of distinct words in the trie
+	size_type size() { return root->leafs; }
 };
 
-
-
-
-
-template<class T>
-trie<T>::trie()
-{
-	root = new trie_node<T>();
-	trie::absEnd = new trie_node<T>();
-	endPtr = trie::absEnd;
-	begPtr = endPtr;
-}
-
-
-template<class T>
-trie<T>::~trie() {
-	delete root;
-	delete trie::absEnd;
-}
 
 /*============================================================================
 
